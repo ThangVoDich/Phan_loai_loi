@@ -13,7 +13,6 @@ AWS_REGION = st.secrets["AWS_REGION"]
 RUNTIME_ARN = st.secrets["RUNTIME_ARN"]
 AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
 AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
-APP_PASSWORD = st.secrets["APP_PASSWORD"]
 
 DEFAULT_CONF = 0.25
 
@@ -52,7 +51,6 @@ def invoke_agentcore(
     uploaded_file,
     conf: float,
     show_reference: bool,
-    include_annotated_base64: bool = False,
     response_mode: str = "json",
 ):
     payload = {
@@ -60,8 +58,8 @@ def invoke_agentcore(
         "image_base64": image_to_base64(uploaded_file),
         "conf": conf,
         "show_reference": show_reference,
-        "include_annotated_base64": include_annotated_base64,
-        "response_mode": response_mode,  # chỉ được "json" hoặc "summary"
+        "include_annotated_base64": True,   # luôn lấy ảnh annotated
+        "response_mode": response_mode,
     }
 
     resp = client.invoke_agent_runtime(
@@ -84,18 +82,9 @@ def decode_annotated_image(result: dict):
     return Image.open(io.BytesIO(image_bytes))
 
 
-def check_password():
-    st.title("AgentCore kiểm tra vị trí sản phẩm")
-    pw = st.text_input("Password", type="password")
-
-    if pw != APP_PASSWORD:
-        st.warning("Nhập password để sử dụng app.")
-        st.stop()
-
-
 def main():
     st.set_page_config(page_title="AgentCore Inspection", layout="wide")
-    check_password()
+    st.title("AgentCore kiểm tra vị trí sản phẩm")
 
     uploaded_files = st.file_uploader(
         "Chọn một hoặc nhiều ảnh",
@@ -105,10 +94,6 @@ def main():
 
     conf = st.slider("Confidence threshold", 0.0, 1.0, DEFAULT_CONF, 0.05)
     show_reference = st.checkbox("Hiện vùng chuẩn", value=True)
-    include_annotated_base64 = st.checkbox(
-        "Lấy ảnh đã annotate từ AgentCore",
-        value=False,
-    )
 
     if uploaded_files:
         client = get_agentcore_client()
@@ -122,7 +107,6 @@ def main():
                         uploaded_file=uploaded_file,
                         conf=conf,
                         show_reference=show_reference,
-                        include_annotated_base64=include_annotated_base64,
                         response_mode="json",
                     )
                     result["filename"] = uploaded_file.name
@@ -168,7 +152,7 @@ def main():
                         use_container_width=True,
                     )
                 else:
-                    st.info("Chưa có ảnh annotate trả về.")
+                    st.info("Không nhận được ảnh annotated từ AgentCore.")
 
             with col2:
                 status = item.get("status", "UNKNOWN")
