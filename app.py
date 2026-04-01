@@ -14,7 +14,7 @@ RUNTIME_ARN = st.secrets["RUNTIME_ARN"]
 AWS_ACCESS_KEY_ID = st.secrets["AWS_ACCESS_KEY_ID"]
 AWS_SECRET_ACCESS_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
 
-DEFAULT_CONF = 0.25
+DEFAULT_CONF = 0.75
 
 
 @st.cache_resource
